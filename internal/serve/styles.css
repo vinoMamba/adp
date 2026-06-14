@@ -1,27 +1,28 @@
-/* ADP viewer design system — "Editorial textbook" (ported from lathe).
-   Warm paper/ember palette, Fraunces/Newsreader/JetBrains Mono typography.
-   Light (paper) is the default; [data-theme="dark"] (ember) overrides. */
+/* ADP viewer design system — "Penguin Classics" literary journal.
+   True off-white paper + deep indigo accent, Fraunces/Newsreader/JetBrains Mono.
+   Indigo hue (~275°) threads through paper tint, accent, and dark variants.
+   Light (paper) is the default; [data-theme="dark"] (ink) overrides. */
 
 :root {
-  /* Surfaces & ink (paper) */
-  --bg:#FBF7F0; --surface:#FFFDF8; --surface-sunken:#F3ECE0;
-  --border:#E4DAC9; --border-strong:#D6C9B4; --border-muted:#EFE7D8;
-  --fg:#1B1714; --fg-muted:#4A4038; --text-subtle:#6B5F53; --text-faint:#8A7C6C;
-  --accent:#B5451F; --accent-hover:#9A3817; --accent-bg:#F6E7DC;
-  --code-bg:#F3ECE0; --code-text:#2A2018;
+  /* Surfaces & ink (paper) — true off-white, indigo hue threaded through */
+  --bg:#F8F7F4; --surface:#FFFFFF; --surface-sunken:#F0EFEB;
+  --border:#E1E0DC; --border-strong:#CAC9C5; --border-muted:#ECEBE7;
+  --fg:#1A1817; --fg-muted:#3A3735; --text-subtle:#56524E; --text-faint:#75716C;
+  --accent:#2A2E5A; --accent-hover:#1F2348; --accent-bg:#EDECF2;
+  --code-bg:#F0EFEB; --code-text:#2A2825;
 
-  /* Status badges (light) — warm-retoned semantics */
-  --draft-fg:#6B5F53;      --draft-bg:#ECE3D5;
-  --updating-fg:#8A5A1B;   --updating-bg:#F7E9CE;
-  --ready-fg:#55692A;      --ready-bg:#E4ECD9;
-  --stale-fg:#963517;      --stale-bg:#F4DCD2;
+  /* Status badges (light) — semantic, distinct from indigo primary */
+  --draft-fg:#56524E;      --draft-bg:#ECEBE7;
+  --updating-fg:#7A4A0E;   --updating-bg:#F4E7C9;
+  --ready-fg:#2F5232;      --ready-bg:#DBE6D0;
+  --stale-fg:#7A2018;      --stale-bg:#EDD5CE;
 
-  /* Callouts (light) — bg / border / label */
-  --callout-note-bg:#E8EDF1; --callout-note-border:#6B8CAE; --callout-note-label:#3F5E80;
-  --callout-tip-bg:#E8EDDC; --callout-tip-border:#7E9A4E; --callout-tip-label:#56692A;
-  --callout-warn-bg:#F8ECD3; --callout-warn-border:#CE9A4A; --callout-warn-label:#8A5A1B;
-  --callout-design-bg:#ECE8F0; --callout-design-border:#8B7BA8; --callout-design-label:#5E4E7C;
-  --callout-aside-bg:transparent; --callout-aside-border:#D6C9B4; --callout-aside-label:#8A7C6C;
+  /* Callouts (light) — bg / border / label. Note = indigo (primary); others semantic */
+  --callout-note-bg:#ECEBF1; --callout-note-border:#4A4E7A; --callout-note-label:#2A2E5A;
+  --callout-tip-bg:#E6EFE0; --callout-tip-border:#6E8A52; --callout-tip-label:#3F5630;
+  --callout-warn-bg:#F5EAD0; --callout-warn-border:#B58A3E; --callout-warn-label:#7A5510;
+  --callout-design-bg:#EAE8F0; --callout-design-border:#7A6A96; --callout-design-label:#4E4068;
+  --callout-aside-bg:transparent; --callout-aside-border:#CAC9C5; --callout-aside-label:#75716C;
 
   /* Type */
   --font-display:'Fraunces','Iowan Old Style',Georgia,serif;
@@ -35,28 +36,28 @@
 
   /* Radius / shadow / motion */
   --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
-  --shadow-sm:0 1px 2px rgba(40,30,20,.07);
-  --shadow-md:0 4px 14px rgba(40,30,20,.12);
+  --shadow-sm:0 1px 2px rgba(25,25,40,.08);
+  --shadow-md:0 4px 14px rgba(25,25,40,.13);
   --transition:120ms ease-out;
 }
 
 [data-theme="dark"] {
-  --bg:#14110D; --surface:#231E18; --surface-sunken:#1A1611;
-  --border:#3D3429; --border-strong:#544838; --border-muted:#2A2218;
-  --fg:#E9E1D3; --fg-muted:#C3B7A4; --text-subtle:#9C8F7C; --text-faint:#7C7060;
-  --accent:#E89A5C; --accent-hover:#F2AE73; --accent-bg:#2A2017;
-  --code-bg:#1B1712; --code-text:#E5DCCB;
+  --bg:#111013; --surface:#1A1922; --surface-sunken:#0C0B0E;
+  --border:#2A2A33; --border-strong:#3D3D4A; --border-muted:#1F1E26;
+  --fg:#E4E2E8; --fg-muted:#C5C2CC; --text-subtle:#9A97A4; --text-faint:#75717E;
+  --accent:#8B8FD6; --accent-hover:#A5A8E0; --accent-bg:#1F1E2E;
+  --code-bg:#0C0B0E; --code-text:#DDDAE3;
 
-  --draft-fg:#9C8F7C;     --draft-bg:#2A2218;
-  --updating-fg:#E0B069;  --updating-bg:#3A2C14;
-  --ready-fg:#A8C07A;     --ready-bg:#2A3320;
-  --stale-fg:#E89A7C;     --stale-bg:#3A241B;
+  --draft-fg:#9A97A4;     --draft-bg:#1F1E26;
+  --updating-fg:#D9A85C;  --updating-bg:#3A2C14;
+  --ready-fg:#94B47A;     --ready-bg:#2A3320;
+  --stale-fg:#D88080;     --stale-bg:#3A201C;
 
-  --callout-note-bg:#182430; --callout-note-border:#4E7090; --callout-note-label:#8DAFC9;
-  --callout-tip-bg:#1E2A18; --callout-tip-border:#6E8A42; --callout-tip-label:#A8C07A;
-  --callout-warn-bg:#2C2310; --callout-warn-border:#B58A3E; --callout-warn-label:#E0B069;
+  --callout-note-bg:#1C1B28; --callout-note-border:#4A4E7A; --callout-note-label:#A5A8D6;
+  --callout-tip-bg:#1E2A18; --callout-tip-border:#6E8A52; --callout-tip-label:#94B47A;
+  --callout-warn-bg:#2C2310; --callout-warn-border:#B58A3E; --callout-warn-label:#D9A85C;
   --callout-design-bg:#221E2E; --callout-design-border:#7A6A96; --callout-design-label:#BCAEDB;
-  --callout-aside-bg:transparent; --callout-aside-border:#463D31; --callout-aside-label:#7C7060;
+  --callout-aside-bg:transparent; --callout-aside-border:#3D3D4A; --callout-aside-label:#75717E;
 
   --shadow-sm:0 1px 2px rgba(0,0,0,.30);
   --shadow-md:0 4px 14px rgba(0,0,0,.45);
@@ -295,7 +296,7 @@ a:hover { color: var(--accent-hover); text-decoration-color: currentColor; }
 .content pre code { background: none; padding: 0; color: inherit; font-size: 1em; overflow-wrap: normal; word-wrap: normal; white-space: pre; }
 .content pre.chroma { background: var(--code-bg); }
 [data-theme="dark"] .content pre.chroma { background: var(--code-bg); }
-.content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(40,30,20,.20); }
+.content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(25,25,40,.18); }
 [data-theme="dark"] .content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(0,0,0,.55); }
 
 /* Code copy button */
