@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADP 客户知识库</title>
+<script>
+  (function(){
+    try {
+      var saved = localStorage.getItem('adp-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+</script>
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -11,6 +21,9 @@
 <div class="topbar">
   <h1>ADP 客户知识库</h1>
   <span class="count">{{len .Clients}} 个客户</span>
+  <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换深色模式">
+    <span class="icon icon-light">☀</span><span class="icon icon-dark">☾</span>
+  </button>
 </div>
 
 <div class="list-wrap">
@@ -81,6 +94,20 @@ document.getElementById('search').addEventListener('input', e => {
     card.classList.toggle('hidden', q && !hay.includes(q));
   });
 });
+
+// Theme toggle.
+(function(){
+  var toggles = document.querySelectorAll('[data-theme-toggle]');
+  if (!toggles.length) return;
+  toggles.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var current = document.documentElement.getAttribute('data-theme') || 'light';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('adp-theme', next); } catch (e) {}
+    });
+  });
+})();
 </script>
 </body>
 </html>

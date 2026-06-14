@@ -4,7 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADP — 客户详情</title>
+<script>
+  (function(){
+    try {
+      var saved = localStorage.getItem('adp-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+</script>
 <link rel="stylesheet" href="/static/styles.css">
+<link rel="stylesheet" href="/static/highlight.css">
 </head>
 <body>
 
@@ -19,6 +30,9 @@
     <button class="btn" data-cmd-prefix="/adp-ask ">提问</button>
     <button class="btn" data-cmd-prefix="/adp-review ">审计</button>
   </div>
+  <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换深色模式">
+    <span class="icon icon-light">☀</span><span class="icon icon-dark">☾</span>
+  </button>
 </div>
 
 <div class="detail-body">
@@ -141,6 +155,7 @@ async function loadFile(path, fname) {
   const html = await res.text();
   const contentEl = document.getElementById('content');
   contentEl.innerHTML = html;
+  enhanceContent(contentEl);
   // Intercept relative markdown links.
   contentEl.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', e => {
@@ -164,6 +179,121 @@ document.getElementById('search').addEventListener('input', e => {
   document.querySelectorAll('.tree-item').forEach(item => {
     if (item.dataset.name === undefined) return;
     item.classList.toggle('hidden', q && !item.dataset.name.includes(q));
+  });
+});
+
+// ---- Theme toggle (runs once) ----
+(function(){
+  var toggles = document.querySelectorAll('[data-theme-toggle]');
+  if (!toggles.length) return;
+  function refresh(){
+    var t = document.documentElement.getAttribute('data-theme') || 'light';
+    toggles.forEach(function(btn){
+      var label = btn.querySelector('.label');
+      if (label) label.textContent = t === 'dark' ? '浅色' : '深色';
+    });
+  }
+  refresh();
+  toggles.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var current = document.documentElement.getAttribute('data-theme') || 'light';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('adp-theme', next); } catch (e) {}
+      refresh();
+      document.dispatchEvent(new CustomEvent('adp:themechange', {detail:{theme:next}}));
+    });
+  });
+})();
+
+// ---- enhanceContent: runs after each file's HTML is injected ----
+var mermaidLoaded = false;
+
+function enhanceContent(contentEl){
+  if (!contentEl) return;
+
+  // Overflow detection on <pre> blocks.
+  contentEl.querySelectorAll('pre').forEach(function(pre){
+    if (pre.scrollWidth - pre.clientWidth > 1) pre.dataset.overflow = 'true';
+    else pre.removeAttribute('data-overflow');
+  });
+
+  // Copy button on each fenced code block.
+  contentEl.querySelectorAll('pre').forEach(function(pre){
+    if (!pre.querySelector(':scope > code')) return;
+    if (pre.parentNode.classList.contains('code-block')) return; // already wrapped
+    var wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-copy';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.textContent = '复制';
+    btn.addEventListener('click', function(){
+      var code = pre.querySelector('code');
+      var text = code ? code.textContent : pre.textContent;
+      navigator.clipboard.writeText(text).then(function(){
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+      }).catch(function(){});
+    });
+    wrapper.appendChild(btn);
+  });
+
+  // Mermaid — lazy load the bundle once, then render all diagrams in scope.
+  var mermaidDivs = contentEl.querySelectorAll('.mermaid');
+  if (mermaidDivs.length) {
+    mermaidDivs.forEach(function(d){
+      // Server base64-encodes the diagram into data-encoded so blank lines in
+      // the source don't break Goldmark's HTML-block parsing. Decode here.
+      if (d.dataset.encoded) {
+        try {
+          // atob returns a Latin-1 string; re-decode the bytes as UTF-8 so
+          // Chinese / other multibyte labels survive the round-trip.
+          var bin = atob(d.dataset.encoded);
+          d.dataset.source = new TextDecoder('utf-8').decode(Uint8Array.from(bin, function(c){ return c.charCodeAt(0); }));
+        } catch (e) { d.dataset.source = d.textContent.trim(); }
+      } else {
+        d.dataset.source = d.textContent.trim();
+      }
+    });
+    function renderMermaid(){
+      if (!window.mermaid) return;
+      var divs = document.querySelectorAll('.content .mermaid');
+      divs.forEach(function(d){
+        d.removeAttribute('data-processed');
+        d.textContent = d.dataset.source;
+      });
+      var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+      window.mermaid.initialize({startOnLoad:false, theme: theme, securityLevel:'loose'});
+      window.mermaid.run({nodes: Array.prototype.slice.call(divs)}).catch(function(err){
+        console.warn('mermaid render failed', err);
+      });
+    }
+    if (!mermaidLoaded) {
+      mermaidLoaded = true;
+      var s = document.createElement('script');
+      s.src = '/static/mermaid.min.js';
+      s.onload = function(){ renderMermaid(); document.addEventListener('adp:themechange', renderMermaid); };
+      s.onerror = function(){ console.warn('mermaid bundle failed to load'); };
+      document.body.appendChild(s);
+    } else {
+      // Bundle already loaded (previous file); re-render for new content.
+      if (window.mermaid) renderMermaid();
+    }
+  }
+}
+
+// Re-check overflow on resize.
+window.addEventListener('resize', function(){
+  var contentEl = document.getElementById('content');
+  if (!contentEl) return;
+  contentEl.querySelectorAll('pre').forEach(function(pre){
+    if (pre.scrollWidth - pre.clientWidth > 1) pre.dataset.overflow = 'true';
+    else pre.removeAttribute('data-overflow');
   });
 });
 

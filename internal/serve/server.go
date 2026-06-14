@@ -15,31 +15,29 @@ import (
 	"strings"
 
 	"github.com/vinoMamba/adp/internal/store"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/renderer/html"
 )
 
 //go:embed list.html detail.html styles.css
 var contentFS embed.FS
 
-var md = goldmark.New(
-	goldmark.WithExtensions(
-		extension.GFM,
-		extension.NewTable(),
-		extension.TaskList,
-		extension.Strikethrough,
-	),
-	goldmark.WithRendererOptions(
-		html.WithHardWraps(),
-		html.WithXHTML(),
-	),
-)
+//go:embed static/mermaid.min.js
+//go:embed static/fonts/fraunces.woff2 static/fonts/newsreader.woff2 static/fonts/newsreader-italic.woff2 static/fonts/jetbrains-mono.woff2
+var staticFS embed.FS
+
+// staticAssets whitelists the embedded files we expose under /static/.
+var staticAssets = map[string]string{
+	"mermaid.min.js":          "application/javascript; charset=utf-8",
+	"fraunces.woff2":          "font/woff2",
+	"newsreader.woff2":        "font/woff2",
+	"newsreader-italic.woff2": "font/woff2",
+	"jetbrains-mono.woff2":    "font/woff2",
+}
 
 // Server holds the root directory and the parsed list template.
 type Server struct {
-	rootDir  string
-	listTmpl *template.Template
+	rootDir      string
+	listTmpl     *template.Template
+	highlightCSS []byte
 }
 
 // cardView is the view model for one client card on the list page.
@@ -57,10 +55,16 @@ func Start(rootDir string, port int) error {
 	if err != nil {
 		return fmt.Errorf("parse list.html: %w", err)
 	}
-	s := &Server{rootDir: rootDir, listTmpl: tmpl}
+	hlCSS, err := HighlightCSS()
+	if err != nil {
+		return fmt.Errorf("build highlight CSS: %w", err)
+	}
+	s := &Server{rootDir: rootDir, listTmpl: tmpl, highlightCSS: []byte(hlCSS)}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /static/styles.css", s.handleStyles)
+	mux.HandleFunc("GET /static/highlight.css", s.handleHighlightCSS)
+	mux.HandleFunc("GET /static/{name}", s.handleStatic)
 	mux.HandleFunc("GET /", s.handleList)
 	mux.HandleFunc("GET /api/clients", s.handleAPIClients)
 	mux.HandleFunc("GET /{name}", s.handleDetail)
@@ -119,6 +123,33 @@ func (s *Server) handleStyles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Write(data)
+}
+
+func (s *Server) handleHighlightCSS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(s.highlightCSS)
+}
+
+func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	contentType, ok := staticAssets[name]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	embedPath := "static/" + name
+	if strings.HasSuffix(name, ".woff2") {
+		embedPath = "static/fonts/" + name
+	}
+	data, err := staticFS.ReadFile(embedPath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	w.Write(data)
 }
 
@@ -216,11 +247,11 @@ func (s *Server) handleAPIFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("read error: %v", err), 404)
 		return
 	}
-	var buf strings.Builder
-	if err := md.Convert(data, &buf); err != nil {
+	out, err := RenderMarkdown(data)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("render error: %v", err), 500)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(buf.String()))
+	w.Write(out)
 }
