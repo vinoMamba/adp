@@ -1,24 +1,27 @@
-/* ADP viewer design system — "Penguin Classics" literary journal.
-   True off-white paper + deep indigo accent, Fraunces/Newsreader/JetBrains Mono.
-   Indigo hue (~275°) threads through paper tint, accent, and dark variants.
+/* ADP viewer design system — "Reader's Desk" literary journal.
+   True off-white paper + deep forest accent, Fraunces/Newsreader/JetBrains Mono.
+   Forest hue (~160° in OKLCH) threads through paper tint, accent, and dark variants.
    Light (paper) is the default; [data-theme="dark"] (ink) overrides. */
 
 :root {
-  /* Surfaces & ink (paper) — true off-white, indigo hue threaded through */
-  --bg:#F8F7F4; --surface:#FFFFFF; --surface-sunken:#F0EFEB;
-  --border:#E1E0DC; --border-strong:#CAC9C5; --border-muted:#ECEBE7;
-  --fg:#1A1817; --fg-muted:#3A3735; --text-subtle:#56524E; --text-faint:#75716C;
-  --accent:#2A2E5A; --accent-hover:#1F2348; --accent-bg:#EDECF2;
-  --code-bg:#F0EFEB; --code-text:#2A2825;
+  /* Surfaces & ink (paper) — true off-white, forest hue threaded through */
+  --bg:#F6F7F4; --surface:#FFFFFF; --surface-sunken:#EEF1EC;
+  --border:#DFE3DE; --border-strong:#C8CCC7; --border-muted:#EAEEE9;
+  --fg:#181A18; --fg-muted:#3A3D3A; --text-subtle:#565A56; --text-faint:#757A75;
+  --accent:#1F3D2E; --accent-hover:#15301F; --accent-bg:#E6EFE9;
+  --code-bg:#EEF1EC; --code-text:#252825;
 
-  /* Status badges (light) — semantic, distinct from indigo primary */
+  /* Status badges (light) — semantic, distinct from forest primary.
+     ready-sage (#2F5232 on #DBE6D0, hue ~135°) sits yellowward of the forest
+     primary (hue ~160°); the two never share a surface, so the family overlap
+     reads as intentional palette cohesion, not collision. */
   --draft-fg:#56524E;      --draft-bg:#ECEBE7;
   --updating-fg:#7A4A0E;   --updating-bg:#F4E7C9;
   --ready-fg:#2F5232;      --ready-bg:#DBE6D0;
   --stale-fg:#7A2018;      --stale-bg:#EDD5CE;
 
-  /* Callouts (light) — bg / border / label. Note = indigo (primary); others semantic */
-  --callout-note-bg:#ECEBF1; --callout-note-border:#4A4E7A; --callout-note-label:#2A2E5A;
+  /* Callouts (light) — bg / border / label. Note = forest (primary); others semantic */
+  --callout-note-bg:#E6EFE9; --callout-note-border:#2F5C44; --callout-note-label:#1F3D2E;
   --callout-tip-bg:#E6EFE0; --callout-tip-border:#6E8A52; --callout-tip-label:#3F5630;
   --callout-warn-bg:#F5EAD0; --callout-warn-border:#B58A3E; --callout-warn-label:#7A5510;
   --callout-design-bg:#EAE8F0; --callout-design-border:#7A6A96; --callout-design-label:#4E4068;
@@ -34,26 +37,28 @@
   --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
   --space-5:1.5rem; --space-6:2rem; --space-7:3rem; --space-8:4rem;
 
-  /* Radius / shadow / motion */
+  /* Radius / shadow / motion.
+     Shadow rgba is cool-forest-neutral (18, 30, 24) — a barely-green dark that
+     threads the brand hue without reading as a colored shadow. */
   --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
-  --shadow-sm:0 1px 2px rgba(25,25,40,.08);
-  --shadow-md:0 4px 14px rgba(25,25,40,.13);
+  --shadow-sm:0 1px 2px rgba(18,30,24,.08);
+  --shadow-md:0 4px 14px rgba(18,30,24,.13);
   --transition:120ms ease-out;
 }
 
 [data-theme="dark"] {
-  --bg:#111013; --surface:#1A1922; --surface-sunken:#0C0B0E;
-  --border:#2A2A33; --border-strong:#3D3D4A; --border-muted:#1F1E26;
-  --fg:#E4E2E8; --fg-muted:#C5C2CC; --text-subtle:#9A97A4; --text-faint:#75717E;
-  --accent:#8B8FD6; --accent-hover:#A5A8E0; --accent-bg:#1F1E2E;
-  --code-bg:#0C0B0E; --code-text:#DDDAE3;
+  --bg:#0E1310; --surface:#161C18; --surface-sunken:#090C0A;
+  --border:#242C27; --border-strong:#353D38; --border-muted:#1A201C;
+  --fg:#E2E8E4; --fg-muted:#C2CCC5; --text-subtle:#97A49C; --text-faint:#717E75;
+  --accent:#7FB994; --accent-hover:#9BCBA8; --accent-bg:#1A2A22;
+  --code-bg:#090C0A; --code-text:#DAE3DD;
 
   --draft-fg:#9A97A4;     --draft-bg:#1F1E26;
   --updating-fg:#D9A85C;  --updating-bg:#3A2C14;
   --ready-fg:#94B47A;     --ready-bg:#2A3320;
   --stale-fg:#D88080;     --stale-bg:#3A201C;
 
-  --callout-note-bg:#1C1B28; --callout-note-border:#4A4E7A; --callout-note-label:#A5A8D6;
+  --callout-note-bg:#1A2A22; --callout-note-border:#3A6A52; --callout-note-label:#7FB994;
   --callout-tip-bg:#1E2A18; --callout-tip-border:#6E8A52; --callout-tip-label:#94B47A;
   --callout-warn-bg:#2C2310; --callout-warn-border:#B58A3E; --callout-warn-label:#D9A85C;
   --callout-design-bg:#221E2E; --callout-design-border:#7A6A96; --callout-design-label:#BCAEDB;
@@ -296,7 +301,7 @@ a:hover { color: var(--accent-hover); text-decoration-color: currentColor; }
 .content pre code { background: none; padding: 0; color: inherit; font-size: 1em; overflow-wrap: normal; word-wrap: normal; white-space: pre; }
 .content pre.chroma { background: var(--code-bg); }
 [data-theme="dark"] .content pre.chroma { background: var(--code-bg); }
-.content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(25,25,40,.18); }
+.content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(18,30,24,.18); }
 [data-theme="dark"] .content pre[data-overflow="true"] { box-shadow: inset -18px 0 14px -12px rgba(0,0,0,.55); }
 
 /* Code copy button */
