@@ -38,7 +38,7 @@ Five skills, one per intent. Each is self-contained (ships its own copy of `refe
 
 | Command | Description |
 |---|---|
-| `adp init` | Initialize root directory (default `~/adp`) |
+| `adp init` | Initialize root directory (default `~/Documents/adp`) |
 | `adp create <客户名称> [--owner X] [--stage Y]` | Create a full client workspace (dirs + templates + metadata.json) |
 | `adp list` | List all clients with stage / status / updated |
 | `adp open [客户名称]` | Open the viewer in the browser |
@@ -56,12 +56,12 @@ Five skills, one per intent. Each is self-contained (ships its own copy of `refe
 
 | Flag | Default | Description |
 |---|---|---|
-| `-d, --dir` | `~/adp` | Root directory (override via `ADP_DIR`) |
+| `-d, --dir` | `~/Documents/adp` | Root directory (override via `ADP_DIR`) |
 
 ## Directory structure
 
 ```
-~/adp/
+~/Documents/adp/
 ├── <客户名称>/
 │   ├── metadata.json              # English-keyed client metadata
 │   ├── AGENTS.md

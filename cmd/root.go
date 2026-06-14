@@ -10,7 +10,7 @@ import (
 )
 
 // rootDir is the ADP root directory holding per-client workspaces; resolved
-// from --dir (default ~/adp).
+// from --dir (default ~/Documents/adp).
 var rootDir string
 
 var rootCmd = &cobra.Command{
