@@ -24,6 +24,13 @@ archives:
         formats:
           - zip
 
+release:
+  # Ship the one-liner installer alongside the archives so users can do
+  # `curl -fsSL .../releases/latest/download/adp-installer.sh | bash`.
+  extra_files:
+    - glob: ./scripts/install.sh
+      name_template: adp-installer.sh
+
 changelog:
   sort: asc
   filters:
