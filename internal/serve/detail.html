@@ -157,11 +157,15 @@ async function loadFile(path, fname) {
   contentEl.innerHTML = html;
   enhanceContent(contentEl);
   // Intercept relative markdown links.
+  // goldmark URL-encodes non-ASCII hrefs in rendered HTML, so decode once
+  // before resolving — otherwise encodeURIComponent double-encodes them.
   contentEl.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', e => {
-      const href = a.getAttribute('href');
-      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      const raw = a.getAttribute('href');
+      if (!raw || raw.startsWith('http') || raw.startsWith('#')) return;
       e.preventDefault();
+      let href;
+      try { href = decodeURIComponent(raw); } catch { href = raw; }
       const dir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
       const resolved = dir ? dir + '/' + href : href;
       loadFile(resolved, href);
