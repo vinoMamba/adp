@@ -50,6 +50,7 @@ Five skills, one per intent. Each is self-contained (ships its own copy of `refe
 | `adp source <客户名称> --origin --type [...]` | Append to 来源登记.md (skill callback) |
 | `adp status <客户名称> [--stage] [--state] [--model]` | Update metadata.json (skill callback) |
 | `adp skills install/list` | Manage bundled skills |
+| `adp update [--check] [--version v0.2.0]` | Self-update from GitHub Releases (SHA256-verified, atomic swap) |
 | `adp version` | Print version info |
 
 ## Global flags

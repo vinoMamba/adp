@@ -10,6 +10,13 @@ var (
 	Date    = ""
 )
 
+// Repo is the GitHub owner/repo used by the self-updater to find releases.
+const Repo = "vinoMamba/adp"
+
+// BinaryName is the published executable name (without extension); used by
+// the updater to locate the binary inside the release archive.
+const BinaryName = "adp"
+
 // Resolve returns the effective version: the injected Version if set, else the
 // module version from the build info (so `go install`ed binaries self-describe).
 func Resolve() string {
