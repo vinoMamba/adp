@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADP — 客户详情</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="/">← 客户列表</a>
+  <span class="client-name" id="clientName">…</span>
+  <span class="badge" id="statusBadge"></span>
+  <span class="count" id="stageText"></span>
+  <div class="actions">
+    <button class="btn" data-cmd-prefix="/adp-ingest ">摄入</button>
+    <button class="btn" data-cmd-prefix="/adp-generate ">生成</button>
+    <button class="btn" data-cmd-prefix="/adp-ask ">提问</button>
+    <button class="btn" data-cmd-prefix="/adp-review ">审计</button>
+  </div>
+</div>
+
+<div class="detail-body">
+  <div class="sidebar">
+    <div class="sidebar-search">
+      <input type="text" id="search" placeholder="搜索文件..." autocomplete="off">
+    </div>
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <div class="main-pane">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="content" id="content">
+      <div class="empty">
+        <div class="icon">📋</div>
+        <div>从左侧选择一个文件开始浏览</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+// Derive the client name from the URL path (single top-level segment).
+const pathParts = window.location.pathname.split('/').filter(Boolean);
+const name = decodeURIComponent(pathParts[0] || '');
+const apiBase = '/' + encodeURIComponent(name);
+
+document.getElementById('clientName').textContent = name;
+
+// Load metadata for the top bar badges.
+fetch(apiBase + '/api/meta').then(r => r.json()).then(m => {
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = m.status;
+  badge.className = 'badge badge-' + m.status;
+  document.getElementById('stageText').textContent = '阶段：' + (m.stage || '—');
+}).catch(() => {});
+
+// Handoff buttons copy the skill command prefixed with the client name.
+document.querySelectorAll('.btn[data-cmd-prefix]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cmd = btn.dataset.cmdPrefix + name;
+    try { await navigator.clipboard.writeText(cmd); }
+    catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = cmd; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    const toast = document.getElementById('toast');
+    toast.textContent = '已复制：' + cmd;
+    toast.classList.add('show');
+    clearTimeout(window.__toast);
+    window.__toast = setTimeout(() => toast.classList.remove('show'), 1800);
+  });
+});
+
+async function loadTree() {
+  const res = await fetch(apiBase + '/api/tree');
+  const data = await res.json();
+  const treeEl = document.getElementById('tree');
+  treeEl.innerHTML = '';
+  renderTree(data, treeEl, 0);
+}
+
+function renderTree(node, container, depth) {
+  if (!node.children) return;
+  node.children.forEach(child => {
+    const item = document.createElement('div');
+    item.className = 'tree-item';
+    item.style.paddingLeft = (12 + depth * 16) + 'px';
+    item.dataset.path = child.path;
+    item.dataset.name = child.name.toLowerCase();
+
+    if (child.type === 'dir') {
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '▶';
+      item.appendChild(arrow);
+      const icon = document.createElement('span');
+      icon.className = 'icon';
+      icon.textContent = '📁';
+      item.appendChild(icon);
+      const n = document.createElement('span');
+      n.textContent = child.name;
+      item.appendChild(n);
+      container.appendChild(item);
+      const childContainer = document.createElement('div');
+      childContainer.className = 'tree-children';
+      container.appendChild(childContainer);
+      renderTree(child, childContainer, depth + 1);
+      item.addEventListener('click', () => {
+        arrow.classList.toggle('expanded');
+        childContainer.classList.toggle('open');
+      });
+    } else {
+      const spacer = document.createElement('span');
+      spacer.style.width = '16px';
+      spacer.style.display = 'inline-block';
+      item.appendChild(spacer);
+      const icon = document.createElement('span');
+      icon.className = 'icon';
+      icon.textContent = '📄';
+      item.appendChild(icon);
+      const n = document.createElement('span');
+      n.textContent = child.name.replace(/\.md$/i, '');
+      item.appendChild(n);
+      container.appendChild(item);
+      item.addEventListener('click', () => loadFile(child.path, child.name));
+    }
+  });
+}
+
+async function loadFile(path, fname) {
+  document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector('.tree-item[data-path="' + CSS.escape(path) + '"]');
+  if (active) active.classList.add('active');
+  updateBreadcrumb(path);
+  const res = await fetch(apiBase + '/api/file?p=' + encodeURIComponent(path));
+  const html = await res.text();
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = html;
+  // Intercept relative markdown links.
+  contentEl.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', e => {
+      const href = a.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      e.preventDefault();
+      const dir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+      const resolved = dir ? dir + '/' + href : href;
+      loadFile(resolved, href);
+    });
+  });
+}
+
+function updateBreadcrumb(path) {
+  const parts = path.split('/');
+  document.getElementById('breadcrumb').innerHTML = '<span>' + parts.join(' / ') + '</span>';
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.tree-item').forEach(item => {
+    if (item.dataset.name === undefined) return;
+    item.classList.toggle('hidden', q && !item.dataset.name.includes(q));
+  });
+});
+
+loadTree();
+</script>
+</body>
+</html>

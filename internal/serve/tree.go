@@ -1,4 +1,4 @@
-package main
+package serve
 
 import (
 	"os"
@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Node is one entry in the workspace file tree (directory or .md file).
 type Node struct {
 	Name     string  `json:"name"`
 	Path     string  `json:"path"`
@@ -14,6 +15,8 @@ type Node struct {
 	Children []*Node `json:"children,omitempty"`
 }
 
+// buildTree walks root/relPath and returns a tree of directories and .md files.
+// Dotfiles and non-markdown files are skipped; empty directories are pruned.
 func buildTree(root, relPath string) (*Node, error) {
 	fullPath := filepath.Join(root, relPath)
 	entries, err := os.ReadDir(fullPath)
@@ -27,11 +30,10 @@ func buildTree(root, relPath string) (*Node, error) {
 		Type: "dir",
 	}
 
-	// Collect valid entries first for stable sorting
 	var dirs, files []os.DirEntry
 	for _, e := range entries {
 		name := e.Name()
-		if strings.HasPrefix(name, ".") || name == ".DS_Store" {
+		if strings.HasPrefix(name, ".") {
 			continue
 		}
 		if e.IsDir() {
@@ -41,29 +43,24 @@ func buildTree(root, relPath string) (*Node, error) {
 		}
 	}
 
-	// Sort dirs and files alphabetically
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
 	sort.Slice(files, func(i, j int) bool { return files[i].Name() < files[j].Name() })
 
-	// Add dirs first, then files
 	for _, d := range dirs {
-		childPath := filepath.Join(relPath, d.Name())
-		child, err := buildTree(root, childPath)
+		child, err := buildTree(root, filepath.Join(relPath, d.Name()))
 		if err != nil {
 			continue
 		}
-		// Skip empty directories (no md files in subtree)
 		if len(child.Children) == 0 {
-			continue
+			continue // prune empty subtrees
 		}
 		node.Children = append(node.Children, child)
 	}
 
 	for _, f := range files {
-		childPath := filepath.Join(relPath, f.Name())
 		node.Children = append(node.Children, &Node{
 			Name: f.Name(),
-			Path: childPath,
+			Path: filepath.Join(relPath, f.Name()),
 			Type: "file",
 		})
 	}

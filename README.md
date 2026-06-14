@@ -1,57 +1,100 @@
 # ADP
 
-A client knowledge base CLI tool. Browse local Markdown documents with a built-in HTTP server.
+A client knowledge base CLI + a set of coding-agent skills that together maintain Account Development Plans (客户经营计划) for enterprise accounts.
+
+The boundary is the same one lathe proved out: **skills generate content; the CLI owns durable state.** The Go binary never drives a model — all LLM work runs in your interactive coding-agent session via user-invoked skills. The CLI scaffolds workspaces, owns `metadata.json` / `更新日志.md` / `来源登记.md`, and serves the viewer UI; skills call back into the CLI to record state.
 
 ## Install
 
 ```bash
-make install
+make install          # builds and copies `adp` to ~/.local/bin
 ```
 
-## Usage
+## The skills (run in your agent session)
+
+After installing, drop them into a project so your agent discovers them:
 
 ```bash
-# Initialize root directory (default ~/adp)
-adp init
-
-# Create client directory
-adp create ClientA
-adp create TestCompany
-
-# Start server, opens browser automatically
-adp serve
-
-# Custom port or directory
-adp serve -p 9090 -d /path/to/docs
+adp skills install                  # ./.claude/skills/<name>/SKILL.md
+adp skills install --user           # ~/.claude/skills/<name>/SKILL.md
+adp skills install --agent cursor   # ./.cursor/commands/<slug>.md
+adp skills install --agent codex    # ./.agents/skills/<name>/SKILL.md
+adp skills install --agent gemini   # ./.gemini/skills/<name>/SKILL.md
+adp skills install --agent all      # every target above
+adp skills list
 ```
 
-## Commands
+Five skills, one per intent. Each is self-contained (ships its own copy of `references/`):
+
+| Skill | Invocation | Does |
+|---|---|---|
+| `adp` | `/adp <客户名称>` | Scaffold workspace (`adp create`), ingest any provided materials, generate the first ADP |
+| `adp-ingest` | `/adp-ingest <客户名称>` | Ingest new raw materials into the knowledge pages |
+| `adp-generate` | `/adp-generate <客户名称>` | Iterate the standard 10-section ADP output from the knowledge base |
+| `adp-ask` | `/adp-ask <客户名称>` | Answer questions about a client (read-only) |
+| `adp-review` | `/adp-review <客户名称>` | Audit the ADP against the quality gates |
+
+## CLI commands
 
 | Command | Description |
-|---------|-------------|
-| `adp init` | Initialize root directory |
-| `adp create <name>` | Create client subdirectory |
-| `adp serve` | Start HTTP server to browse documents |
+|---|---|
+| `adp init` | Initialize root directory (default `~/adp`) |
+| `adp create <客户名称> [--owner X] [--stage Y]` | Create a full client workspace (dirs + templates + metadata.json) |
+| `adp list` | List all clients with stage / status / updated |
+| `adp open [客户名称]` | Open the viewer in the browser |
+| `adp rm <客户名称> --force` | Remove a client workspace |
+| `adp serve [-p 7260]` | Start the viewer HTTP server |
+| `adp ingest <客户名称>` | Print the `/adp-ingest` command to paste (handoff) |
+| `adp generate <客户名称>` | Print the `/adp-generate` command to paste (handoff) |
+| `adp log <客户名称> --action --judgement` | Append to 更新日志.md (skill callback) |
+| `adp source <客户名称> --origin --type [...]` | Append to 来源登记.md (skill callback) |
+| `adp status <客户名称> [--stage] [--state] [--model]` | Update metadata.json (skill callback) |
+| `adp skills install/list` | Manage bundled skills |
+| `adp version` | Print version info |
 
-## Global Flags
+## Global flags
 
 | Flag | Default | Description |
-|------|---------|-------------|
-| `-d, --dir` | `~/adp` | Root directory path |
+|---|---|---|
+| `-d, --dir` | `~/adp` | Root directory (override via `ADP_DIR`) |
 
-## Serve Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-p, --port` | `7260` | HTTP server port |
-
-## Directory Structure
+## Directory structure
 
 ```
 ~/adp/
-├── ClientA/
-├── ClientB/
+├── <客户名称>/
+│   ├── metadata.json              # English-keyed client metadata
+│   ├── AGENTS.md
+│   ├── 原始资料/{公开调研,拜访纪要,方案报价,CRM记录,系统资料}/
+│   ├── 客户知识库/{索引,客户画像,现状,人物与决策链,机会与动机,行动计划,来源登记,更新日志}.md
+│   └── 输出/<客户名称>-ADP.md      # the single, iterated ADP output
 └── ...
 ```
 
-Place `.md` files under each client directory. The serve command renders them as HTML with a tree navigation sidebar.
+## metadata.json
+
+```json
+{
+  "name": "客户名称",
+  "owner": "负责人",
+  "stage": "调研中",
+  "status": "draft",
+  "created": "...",
+  "updated": "...",
+  "model": "Claude Opus 4.8",
+  "materials_count": 0
+}
+```
+
+`status`: `draft` → `updating` → `ready`; `stale` when new materials arrive but the ADP isn't regenerated. Field keys are English; values may be Chinese.
+
+## Development
+
+```bash
+make build          # go build
+make check          # pre-PR gate: skillsCheck + vet + test
+make skills         # sync adp-skill/ → internal/skills/data/ (the embed mirror)
+make skillsCheck    # fail if the mirror drifted
+```
+
+`adp-skill/` is the single source of truth for skills. Because `go:embed` cannot reach it from `internal/skills/`, a tracked mirror at `internal/skills/data/` is the embed source; `make skills` regenerates it. Never hand-edit the mirror — edit `adp-skill/` and run `make skills`.

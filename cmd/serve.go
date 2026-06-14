@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -8,13 +8,16 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
+	"github.com/vinoMamba/adp/internal/serve"
 )
 
+// servePort is read by both serve and open (keep them in sync if more commands
+// need the port — mirrors lathe's cmd/serve.go + cmd/open.go coupling).
 var servePort int
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "启动 HTTP 服务",
+	Short: "启动 HTTP 服务浏览客户知识库",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		absDir, err := filepath.Abs(rootDir)
 		if err != nil {
@@ -23,11 +26,9 @@ var serveCmd = &cobra.Command{
 		if info, err := os.Stat(absDir); err != nil || !info.IsDir() {
 			return fmt.Errorf("directory does not exist: %s", absDir)
 		}
-
-		url := fmt.Sprintf("http://localhost:%d", servePort)
-		openBrowser(url)
-
-		return startServer(absDir, servePort)
+		u := fmt.Sprintf("http://localhost:%d", servePort)
+		openBrowser(u)
+		return serve.Start(absDir, servePort)
 	},
 }
 
@@ -36,17 +37,18 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 }
 
-func openBrowser(url string) {
-	var cmd *exec.Cmd
+// openBrowser launches url in the user's default browser (best-effort).
+func openBrowser(u string) {
+	var c *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url)
+		c = exec.Command("open", u)
 	case "linux":
-		cmd = exec.Command("xdg-open", url)
+		c = exec.Command("xdg-open", u)
 	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", url)
+		c = exec.Command("cmd", "/c", "start", u)
 	}
-	if cmd != nil {
-		cmd.Start() //nolint:errcheck
+	if c != nil {
+		c.Start() //nolint:errcheck
 	}
 }

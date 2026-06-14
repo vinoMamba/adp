@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADP 客户知识库</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <h1>ADP 客户知识库</h1>
+  <span class="count">{{len .Clients}} 个客户</span>
+</div>
+
+<div class="list-wrap">
+  <div class="search-box">
+    <input type="text" id="search" placeholder="搜索客户名称 / 阶段..." autocomplete="off">
+  </div>
+
+  {{if .Clients}}
+  <div class="cards" id="cards">
+    {{range .Clients}}
+    <div class="card"
+         data-name="{{.Name}}"
+         data-status="{{.Status}}"
+         data-stage="{{.Stage}}">
+      <div class="card-header">
+        <a class="card-name" href="/{{.Name}}">{{.Name}}</a>
+        <span class="badge badge-{{.Status}}">{{.Status}}</span>
+      </div>
+      <div class="card-meta">
+        <span>阶段：{{.Stage}}</span>
+        <span>更新：{{.Updated}}</span>
+        <span>资料：{{.MaterialsCount}}</span>
+      </div>
+      <div class="actions">
+        <button class="btn" data-cmd="/adp-ingest {{.Name}}">摄入</button>
+        <button class="btn" data-cmd="/adp-generate {{.Name}}">生成</button>
+        <button class="btn" data-cmd="/adp-ask {{.Name}}">提问</button>
+        <button class="btn" data-cmd="/adp-review {{.Name}}">审计</button>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  {{else}}
+  <div class="empty-hint">
+    暂无客户。运行 <code>adp create &lt;客户名称&gt;</code> 创建，或在 agent 会话里运行 <code>/adp &lt;客户名称&gt;</code>。
+  </div>
+  {{end}}
+</div>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+// Copy handoff skill command to clipboard.
+document.querySelectorAll('.btn[data-cmd]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cmd = btn.dataset.cmd;
+    try {
+      await navigator.clipboard.writeText(cmd);
+    } catch (e) {
+      // Fallback for non-secure contexts.
+      const ta = document.createElement('textarea');
+      ta.value = cmd; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    const toast = document.getElementById('toast');
+    toast.textContent = '已复制：' + cmd;
+    toast.classList.add('show');
+    clearTimeout(window.__toast);
+    window.__toast = setTimeout(() => toast.classList.remove('show'), 1800);
+  });
+});
+
+// Client-side search over name / stage / status.
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.card').forEach(card => {
+    const hay = (card.dataset.name + ' ' + card.dataset.stage + ' ' + card.dataset.status).toLowerCase();
+    card.classList.toggle('hidden', q && !hay.includes(q));
+  });
+});
+</script>
+</body>
+</html>

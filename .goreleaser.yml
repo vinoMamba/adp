@@ -12,6 +12,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
+      - -X github.com/vinoMamba/adp/internal/buildinfo.Version={{.Version}}
+      - -X github.com/vinoMamba/adp/internal/buildinfo.Commit={{.ShortCommit}}
+      - -X github.com/vinoMamba/adp/internal/buildinfo.Date={{.Date}}
 
 archives:
   - formats:
